@@ -58,13 +58,12 @@ function setupPhysics() {
     var CANVAS_HEIGHT_M = toMeters(CANVAS_HEIGHT);
 
     // create ground
-    var borderWidth = toMeters(20);
+    var borderWidth = toMeters(1);
 
-    ground = createBox(world, CANVAS_WIDTH_M / 2, CANVAS_HEIGHT_M, CANVAS_WIDTH_M * 2, borderWidth); // bottom
-
-    //createBox(world, CANVAS_WIDTH_M / 2, 0, CANVAS_WIDTH_M, borderWidth);
-    //createBox(world, 0, 0, borderWidth, CANVAS_HEIGHT_M);
-    //createBox(world, CANVAS_WIDTH_M, 0, borderWidth, CANVAS_HEIGHT_M);
+    ground = createBox(CANVAS_WIDTH / 2, CANVAS_HEIGHT, CANVAS_WIDTH_M * 2, borderWidth, true); // bottom
+    createBox(CANVAS_WIDTH / 2, 0, CANVAS_WIDTH_M, borderWidth, true);
+    createBox(0, 0, borderWidth, CANVAS_HEIGHT_M, true);
+    createBox(CANVAS_WIDTH, 0, borderWidth, CANVAS_HEIGHT_M, true);
 }
 
 function setupDebugDraw() {
@@ -99,7 +98,7 @@ function createBall(x, y, radius) {
     var fixDef = new b2FixtureDef;
     fixDef.density = 1.0;
     fixDef.friction = 0.5;
-    fixDef.restitution = 0.5;
+    fixDef.restitution = 0.3;
     fixDef.shape = new b2CircleShape(radius);
 
     body = world.CreateBody(bodyDef);
@@ -108,16 +107,18 @@ function createBall(x, y, radius) {
     fixture = body.CreateFixture(fixDef);
 }
 
-function createBox(world, x, y, width, height) {
+function createBox(x, y, width, height, is_static) {
+    x = toMeters(x);
+    y = toMeters(y);
+
     var bodyDef = new b2BodyDef;
-    bodyDef.type = b2Body.b2_dynamicBody;
+    bodyDef.type = is_static ? b2Body.b2_staticBody : b2Body.b2_dynamicBody;
 
     var fixDef = new b2FixtureDef;
     fixDef.density = 1.0;
     fixDef.friction = 0.5;
-    fixDef.restitution = 0.8;
+    fixDef.restitution = 0.3;
 
-    bodyDef.type = b2Body.b2_staticBody;
     bodyDef.position.x = x;
     bodyDef.position.y = y;
 
@@ -176,6 +177,11 @@ function canvasClicked(event) {
     if(objectType == 'object_ball') {
         radius = +$('.ball_attrs').find('.radius_input').val();
         createBall(x, y, radius);
+        $('#add_object_select').val('');
+    } else if(objectType == 'object_box') {
+        var width = +$('.box_attrs').find('.width_input').val();
+        var height = +$('.box_attrs').find('.height_input').val();
+        createBox(x, y, width, height);
         $('#add_object_select').val('');
     }
 }
