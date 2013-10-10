@@ -21,13 +21,19 @@ var FPS = 60;
 var CANVAS_WIDTH, CANVAS_HEIGHT;
 
 var world, canvas;
-var frame_number = 0;
+var frameNumber = 0;
+
+var mousePressed = false;
+var mouseJoint = false;
 
 
 $(document).ready(function() {
     init();
-    canvas.on('click', canvas_clicked);
-    $('#add_object_select').on('change', change_add_object);
+    canvas.on('click', canvasClicked);
+
+    canvas.mousemove(mouseMove);
+    canvas.mousedown(mouseDown);
+    canvas.mouseup(mouseUp);
 });
 
 function init() {
@@ -40,7 +46,7 @@ function init() {
     window.setInterval(update, 1000 / FPS);
 }
 
-function to_meters(pixels) {
+function toMeters(pixels) {
     return pixels / SCALE;
 }
 
@@ -48,17 +54,17 @@ function setupPhysics() {
     var gravity = new b2Vec2(0, 10)
     world = new b2World(gravity, true);
 
-    var CANVAS_WIDTH_M = to_meters(CANVAS_WIDTH);
-    var CANVAS_HEIGHT_M = to_meters(CANVAS_HEIGHT);
+    var CANVAS_WIDTH_M = toMeters(CANVAS_WIDTH);
+    var CANVAS_HEIGHT_M = toMeters(CANVAS_HEIGHT);
 
     // create ground
-    var border_width = to_meters(20);
+    var borderWidth = toMeters(20);
 
-    createBox(world, CANVAS_WIDTH_M / 2, CANVAS_HEIGHT_M, CANVAS_WIDTH_M * 2, border_width); // bottom
+    ground = createBox(world, CANVAS_WIDTH_M / 2, CANVAS_HEIGHT_M, CANVAS_WIDTH_M * 2, borderWidth); // bottom
 
-    //createBox(world, CANVAS_WIDTH_M / 2, 0, CANVAS_WIDTH_M, border_width);
-    //createBox(world, 0, 0, border_width, CANVAS_HEIGHT_M);
-    //createBox(world, CANVAS_WIDTH_M, 0, border_width, CANVAS_HEIGHT_M);
+    //createBox(world, CANVAS_WIDTH_M / 2, 0, CANVAS_WIDTH_M, borderWidth);
+    //createBox(world, 0, 0, borderWidth, CANVAS_HEIGHT_M);
+    //createBox(world, CANVAS_WIDTH_M, 0, borderWidth, CANVAS_HEIGHT_M);
 }
 
 function setupDebugDraw() {
@@ -78,12 +84,12 @@ function update() {
     world.DrawDebugData();
     world.ClearForces();
 
-    frame_number++;
+    frameNumber++;
 }
 
 function createBall(x, y, radius) {
-    x = to_meters(x);
-    y = to_meters(y);
+    x = toMeters(x);
+    y = toMeters(y);
 
     var bodyDef = new b2BodyDef;
     bodyDef.type = b2Body.b2_dynamicBody;
@@ -92,7 +98,7 @@ function createBall(x, y, radius) {
 
     var fixDef = new b2FixtureDef;
     fixDef.density = 1.0;
-    fixDef.friction = 0.5;
+    fixDef.friction = 0.7;
     fixDef.restitution = 0.8;
     fixDef.shape = new b2CircleShape(radius);
 
@@ -118,18 +124,99 @@ function createBox(world, x, y, width, height) {
     fixDef.shape = new b2PolygonShape();
     fixDef.shape.SetAsBox(width, height);
 
-    world.CreateBody(bodyDef).CreateFixture(fixDef);
+    var body = world.CreateBody(bodyDef);
+    body.CreateFixture(fixDef);
+    return body;
 }
 
-function canvas_clicked(event) {
+function getInstrument() {
+    return $('#add_object_select').val();
+}
+
+function getBodyAtPoint(point, includeStatic) {
+    var aabb = new b2AABB();
+    aabb.lowerBound.Set(point.x - 0.001, point.y - 0.001);
+    aabb.upperBound.Set(point.x + 0.001, point.y + 0.001);
+
+    var body = null;
+
+    console.log(point.x, point.y)
+
+    // Query the world for overlapping shapes.
+    function GetBodyCallback(fixture)
+    {
+        var shape = fixture.GetShape();
+
+        if (fixture.GetBody().GetType() != b2Body.b2_staticBody || includeStatic)
+        {
+            var inside = shape.TestPoint(fixture.GetBody().GetTransform(), point);
+
+            if (inside)
+            {
+                body = fixture.GetBody();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    world.QueryAABB(GetBodyCallback, aabb);
+    return body;
+}
+
+function canvasClicked(event) {
     event.preventDefault()
     var x = event.offsetX,
         y = event.offsetY;
 
-    var object_type = $('#add_object_select').val();
+    var objectType = getInstrument();
 
-    if(object_type == 'object_ball') {
+    if(objectType == 'object_ball') {
         radius = +$('.ball_attrs').find('.radius_input').val();
         createBall(x, y, radius);
     }
 }
+
+function mouseMove(event) {
+    var cursorPoint = new b2Vec2(toMeters(event.offsetX), toMeters(event.offsetY));
+
+    if(mousePressed && !mouseJoint && !getInstrument()) {
+        console.log("move")
+        var body = getBodyAtPoint(cursorPoint);
+
+        if(body) {
+            console.log(body)
+            var def = new b2MouseJointDef();
+
+            def.bodyA = ground;
+            def.bodyB = body;
+            def.target = cursorPoint;
+
+            def.collideConnected = true;
+            def.maxForce = 10000 * body.GetMass();
+            def.dampingRatio = 0;
+
+            mouseJoint = world.CreateJoint(def);
+
+            body.SetAwake(true);
+        }
+    }
+
+    if(mouseJoint) {
+        mouseJoint.SetTarget(cursorPoint);
+    }
+}
+
+function mouseDown() {
+    mousePressed = true;
+};
+
+function mouseUp() {
+    mousePressed = false;
+
+    if(mouseJoint) {
+        world.DestroyJoint(mouseJoint);
+        mouseJoint = false;
+    }
+};
