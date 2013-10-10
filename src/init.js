@@ -98,8 +98,8 @@ function createBall(x, y, radius) {
 
     var fixDef = new b2FixtureDef;
     fixDef.density = 1.0;
-    fixDef.friction = 0.7;
-    fixDef.restitution = 0.8;
+    fixDef.friction = 0.5;
+    fixDef.restitution = 0.5;
     fixDef.shape = new b2CircleShape(radius);
 
     body = world.CreateBody(bodyDef);
@@ -166,7 +166,8 @@ function getBodyAtPoint(point, includeStatic) {
 }
 
 function canvasClicked(event) {
-    event.preventDefault()
+    event.preventDefault();
+    event.stopPropagation();
     var x = event.offsetX,
         y = event.offsetY;
 
@@ -175,6 +176,7 @@ function canvasClicked(event) {
     if(objectType == 'object_ball') {
         radius = +$('.ball_attrs').find('.radius_input').val();
         createBall(x, y, radius);
+        $('#add_object_select').val('');
     }
 }
 
@@ -182,6 +184,7 @@ function mouseMove(event) {
     var cursorPoint = new b2Vec2(toMeters(event.offsetX), toMeters(event.offsetY));
 
     if(mousePressed && !mouseJoint && !getInstrument()) {
+        event.preventDefault();
         console.log("move")
         var body = getBodyAtPoint(cursorPoint);
 
