@@ -2,10 +2,30 @@
 <html>
     <head>
         <title>Physical Experiments</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
         <script type="text/javascript" src="libs/Box2dWeb-2.1.a.3.min.js"></script>
+        <script type="text/javascript" src="libs/jquery-2.0.3.js"></script>
         <script type="text/javascript" src="src/init.js"></script>
     </head>
-    <body onload="init();">
-        <canvas id="canvas" width="800" height="600"></canvas>
+    <body>
+        <div id="app">
+            <div class="panel-left">
+                <div class="add_object_panel">
+                    <span class="panel_header">Добавить объект</span>
+                    <select id="add_object_select">
+                        <option value="object_ball">Шар</option>
+                        <option value="object_box">Коробка</option>
+                    </select>
+                    <table class="object_attrs ball_attrs">
+                        <tr>
+                            <td>Радиус</td>
+                            <td><input class="radius_input" type="number" min="0.2" max="10" step="0.2" value="1"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <canvas id="canvas" width="800" height="600"></canvas>
+        </div>
     </body>
 </html>

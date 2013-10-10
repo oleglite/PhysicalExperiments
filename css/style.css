@@ -1,0 +1,38 @@
+body {
+    background-color: #CCC;
+}
+
+.remove_spacing, #app, #canvas {
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+}
+
+#canvas {
+    background-color: #FFF;
+    cursor: default;
+}
+
+.panel-left {
+    float: left;
+    width: 250px;
+    height: 572px;
+
+    margin-right: 5px;
+    padding: 14px;
+
+    background: #eee;
+}
+
+.panel_header {
+    padding-right: 6px;
+}
+
+.object_attrs {
+    width: 100%;
+    border: 1px dashed #aaa;
+    margin: 6px 0;
+    padding: 6px;
+}
